@@ -7,18 +7,18 @@
 
 //This file is part of COR-Predictor-CUDA.
 //
-//   COR-Predictor is free software: you can redistribute it and/or modify
+//   COR-Predictor-CUDA is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
 //
-//   COR-Predictor is distributed in the hope that it will be useful,
+//   COR-Predictor-CUDA is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
 //
 //   You should have received a copy of the GNU General Public License
-//   along with COR-Predictor.  If not, see <https://www.gnu.org/licenses/>.
+//   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef COR_PREDICTOR_HPP_
 #define COR_PREDICTOR_HPP_
@@ -116,6 +116,9 @@ bool COR_predictor::quit_cor = false;
 std::vector<std::vector<float> > COR_predictor::parameters_global(4,std::vector<float> (6));
 
 //Thanks to Ashwin on Code Yarns for this method: https://codeyarns.com/2011/04/09/how-to-pass-thrust-device-vector-to-kernel/
+
+//The Kernel Array structure is a way to convert higher dimensional arrays into 1-d arrays that the kernel can understand
+//The three size variables keep track of the dimensions of the original array
 template<typename T>
 struct KernelArray
 {
