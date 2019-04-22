@@ -23,7 +23,6 @@
 class genetic : public optimization
 {
 	private:
-		
 		static void Get_global_parameters(thrust::device_vector<float> &d_param);
 		static int partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
 		static void quicksort_index(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
@@ -132,7 +131,8 @@ void genetic::Get_global_parameters(thrust::device_vector<float> &d_param)
 	d_param = h_param;
 }
 
-__global__ void initiate_threads(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, KernelArray<int> index, bool random, int start)
+//Kernel to initiate the population, MSE, and index arrays
+__global__ void initiate_kernel(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, KernelArray<int> index, bool random, int start)
 {
 	int i = start + threadIdx.x;
 	
@@ -185,7 +185,8 @@ void genetic::quicksort(thrust::host_vector<float> &cost, thrust::host_vector<in
 	}
 }
 
-__global__ void sort(KernelArray<bool> population, KernelArray<bool> bin, KernelArray<float> mean_squared, KernelArray<float> cost, KernelArray<int> index)
+//Kernel for arranging the population and MSE's in the order of the quicksorted indices
+__global__ void rearrange_kernel(KernelArray<bool> population, KernelArray<bool> bin, KernelArray<float> mean_squared, KernelArray<float> cost, KernelArray<int> index)
 {
 	int i = threadIdx.x;
 	for (int j=0; j<population.size_j; ++j)
@@ -208,7 +209,7 @@ void genetic::Initiate(HostArray<bool> &population, HostArray<float> &mean_squar
 	Get_global_parameters(param);
 	
 	//fills the elite population with the parameters read from file unless user specifies an entirely random population
-	initiate_threads<<<1,n_elite>>>(convertToKernel(bin,n_initial,population.size_j,population.size_k), 
+	initiate_kernel<<<1,n_elite>>>(convertToKernel(bin,n_initial,population.size_j,population.size_k), 
 									convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
 									x,y,cost,index,random_parameters,0);
 	
@@ -216,15 +217,14 @@ void genetic::Initiate(HostArray<bool> &population, HostArray<float> &mean_squar
 	random_parameters = true;
 	
 	//The remaining population is initialized randomly
-	initiate_threads<<<1,n_initial-n_elite >>>(convertToKernel(bin,n_initial,population.size_j,population.size_k), 
+	initiate_kernel<<<1,n_initial-n_elite >>>(convertToKernel(bin,n_initial,population.size_j,population.size_k), 
 									convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
 									x,y,cost,index,random_parameters,n_elite);
 	
-	
+	//sort population by cost
 	thrust::host_vector<float> h_cost = cost;
 	thrust::host_vector<int> h_index = index;
 	
-	//sorts population by cost
 	quicksort(h_cost,h_index, 0, n_initial-1);
 	
 	cost = h_cost;
@@ -233,7 +233,7 @@ void genetic::Initiate(HostArray<bool> &population, HostArray<float> &mean_squar
 	thrust::device_vector<bool> d_population(population.size_i*population.size_j*population.size_k);
 	thrust::device_vector<float> d_mean_squared(n_gpool);
 	
-	sort<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
+	rearrange_kernel<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
 						convertToKernel(bin, n_initial, population.size_j, population.size_k),
 						d_mean_squared, cost, index);
 	
@@ -253,7 +253,8 @@ void genetic::shuffle(thrust::host_vector<int> &index)
 	}
 }
 
-__global__ void tourney_threads(KernelArray<bool> population, KernelArray<bool> bin, KernelArray<float> mean_squared, KernelArray<float> cost, KernelArray<int> index)
+//Kernel to run tournaments
+__global__ void tourney_kernel(KernelArray<bool> population, KernelArray<bool> bin, KernelArray<float> mean_squared, KernelArray<float> cost, KernelArray<int> index)
 {
 	int i = threadIdx.x;
 	int l = 2*i;
@@ -300,7 +301,7 @@ void genetic::tournament(HostArray<bool>  &population, HostArray<float> &mean_sq
 	thrust::device_vector<int> index = h_index;
 	
 	//run tournaments
-	tourney_threads<<<1,n_repro>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
+	tourney_kernel<<<1,n_repro>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
 									convertToKernel(d_population, population.size_i, population.size_j, population.size_k),
 									d_mean_squared,cost,index);
 										
@@ -309,7 +310,8 @@ void genetic::tournament(HostArray<bool>  &population, HostArray<float> &mean_sq
 	mean_squared.array = d_mean_squared;
 }
 
-__global__ void repro_threads(KernelArray<bool> bin, int n_repro, int n_repro2)
+//Kernel to produce children from two parent arrays
+__global__ void repro_kernel(KernelArray<bool> bin, int n_repro, int n_repro2)
 {
 	int i = n_repro + threadIdx.x;
 	int l = 2*threadIdx.x;
@@ -351,13 +353,14 @@ void genetic::reproduction(HostArray<bool> &population, HostArray<float> &mean_s
 	thrust::device_vector<bool> bin = population.array;
 	
 	//perform reproduction ( ͡° ͜ʖ ͡°)
-	repro_threads<<<1,n_repro2>>>(convertToKernel(bin,population.size_i,population.size_j, population.size_k),n_repro,n_repro2);
+	repro_kernel<<<1,n_repro2>>>(convertToKernel(bin,population.size_i,population.size_j, population.size_k),n_repro,n_repro2);
 	
 	//copy to host
 	population.array = bin;
 }
 
-__global__ void eval_threads(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, KernelArray<int> index)
+//kernel to evaluate the cost of each member of the population
+__global__ void eval_kernel(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, KernelArray<int> index)
 {
 	int i = threadIdx.x;
 	genetic::decode(param, bin, i);
@@ -377,19 +380,17 @@ void genetic::rankChromosomes(HostArray<bool> &population, HostArray<float> &mea
 	thrust::device_vector<int> index(n_gpool);
 		
 	//evaluate cost of each array
-	eval_threads<<<1,n_gpool>>>(convertToKernel(bin,population.size_i, population.size_j, population.size_k),
+	eval_kernel<<<1,n_gpool>>>(convertToKernel(bin,population.size_i, population.size_j, population.size_k),
 								convertToKernel(param,n_gpool,parameters_global.size(),parameters_global[0].size()),
 								x,y,cost,index);
-								
+	//sort population by cost					
 	thrust::host_vector<float> h_cost = cost;
 	thrust::host_vector<int> h_index = index;
-	
-	//sorts population by cost
 	
 	cost = h_cost;
 	index = h_index;
 	
-	sort<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
+	rearrange<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
 						convertToKernel(bin, n_gpool, population.size_j, population.size_k),
 						d_mean_squared, cost, index);
 	
@@ -399,7 +400,8 @@ void genetic::rankChromosomes(HostArray<bool> &population, HostArray<float> &mea
 
 }
 
-__global__ void elite_threads(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, int n_elite, int iterations)
+//kernel to mutate bits of the elite population
+__global__ void elite_kernel(KernelArray<bool> bin, KernelArray<float> param, KernelArray<float> x, KernelArray<float> y, KernelArray<float> cost, int n_elite, int iterations)
 {
 	//seed RNG
 	unsigned int seed = (unsigned long long)clock() + threadIdx.x + (blockIdx.x*blockDim.x);
@@ -431,7 +433,8 @@ __global__ void elite_threads(KernelArray<bool> bin, KernelArray<float> param, K
 	}
 }
 
-__global__ void normal_threads(KernelArray<bool> bin, int n_elite, int n_normal)
+//kernel to mutate bits of the remaining population
+__global__ void normal_kernel(KernelArray<bool> bin, int n_elite, int n_normal)
 {
 	//seed RNG
 	unsigned int seed = (unsigned long long)clock() + threadIdx.x + (blockIdx.x*blockDim.x);
@@ -447,6 +450,7 @@ __global__ void normal_threads(KernelArray<bool> bin, int n_elite, int n_normal)
 	bin.array[k + bin.size_k*(j + bin.size_j*i)] = !bin.array[k + bin.size_k*(j + bin.size_j*i)];
 }
 
+//Mutates bits to introduce variation to the population
 void genetic::mutate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y)
 {
 	
@@ -458,14 +462,14 @@ void genetic::mutate(HostArray<bool> &population, HostArray<float> &mean_squared
 	int iterations = (int) (population.size_j*population.size_k*pm+1);
 	
 	//mutate elite population
-	elite_threads<<<1, n_elite>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
+	elite_kernel<<<1, n_elite>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
 								convertToKernel(param, n_gpool, parameters_global.size(), parameters_global[0].size()),
 								x, y, cost, n_elite, iterations);
 								
 	int num_blocks = (int) (n_normal*population.size_j*population.size_k*pm+1)/100;
 	
 	//mutate normal population
-	normal_threads<<<num_blocks, 100 >>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k), n_elite, n_normal);
+	normal_kernel<<<num_blocks, 100 >>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k), n_elite, n_normal);
 	
 	//copy to host
 	population.array = bin;
@@ -550,16 +554,19 @@ void genetic::run()
 	mean_squared_error.size_k = 1;
 	
 	thrust::device_vector<float> x1(n_data*nx);
-	thrust::host_vector<float> x2(n_data*nx);
 	flatten2dToDevice(x1, independent);
-	flatten2dToHost(x2, independent);
 	KernelArray<float> d_x = convertToKernel(x1, n_data, nx, 1);
+	
+	thrust::host_vector<float> x2(n_data*nx);
+	flatten2dToHost(x2, independent);
 	KernelArray<float> h_x = convertToKernel(x2, n_data, nx, 1);
+	
 	thrust::device_vector<float> y1(n_data);
-	thrust::host_vector<float> y2(n_data);
 	thrust::copy(dependent.begin(), dependent.end(), y1.begin());
-	thrust::copy(dependent.begin(), dependent.end(), y2.begin());
 	KernelArray<float> d_y = convertToKernel(y1, n_data, 1, 1);
+	
+	thrust::host_vector<float> y2(n_data);
+	thrust::copy(dependent.begin(), dependent.end(), y2.begin());
 	KernelArray<float> h_y = convertToKernel(y2, n_data, 1, 1);
 	
 	Initiate(binary_population, mean_squared_error, d_x, d_y);
