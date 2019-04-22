@@ -150,3 +150,5 @@ struct HostArray
 	size_t size_j;
 	size_t size_k;
 };
+
+#endif /* COR_PREDICTOR_HPP_ */
