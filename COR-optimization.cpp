@@ -21,8 +21,6 @@
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cuda.h>
-#include <curand.h>
-#include <curand_kernel.h>
 #include <COR-predictor.hpp>
 #include <k-hArray.hpp>
 
