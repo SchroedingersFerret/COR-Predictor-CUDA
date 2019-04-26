@@ -1,11 +1,15 @@
 HOST_COMPILER = 
 CUDA_PATH := /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 HOST_ARCH := $(shell uname -m)
 TARGET_ARCH ?= $(HOST_ARCH)
+GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
+
 OBJECTS = COR-predictor.o COR-optimization.o\
           COR-genetic.o COR-anneal.o COR-main.o
 
 all : $(OBJECTS)
-  $(NVCC) $(GENCODE_FLAGS) -std=c++11 $(OBJECTS) -o COR-predictor
+  $(NVCC) $(GENCODE_FLAGS) $(OBJECTS) -o COR-predictor
  
-
+COR-predictor.o : COR-predictor.cpp 
+  $(NVCC) -x cu $(GENCODE_FLAGS) -std=c++11
