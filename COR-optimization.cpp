@@ -20,6 +20,11 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <cuda.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <k-hArray.hpp>
+
 //generates a random float between -1.0 and 1.0
 float optimization::RandInit()
 {
@@ -27,7 +32,6 @@ float optimization::RandInit()
 	r /= RAND_MAX;
 	return r;
 };
-
 
 //Evaluates Chebyshev approximation at x with coefficients from param[]
 __device__ __host__ float optimization::Chebyshev(float x, KernelArray<float> param, int i, int j, float a, float b)
