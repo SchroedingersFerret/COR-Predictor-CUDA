@@ -23,6 +23,7 @@
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <COR-predictor.hpp>
 #include <k-hArray.hpp>
 
 //generates a random float between -1.0 and 1.0
