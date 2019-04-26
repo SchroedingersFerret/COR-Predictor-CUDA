@@ -1,3 +1,4 @@
 CUDA_PATH ?= /usr/local/cuda
 HOST_ARCH := $(shell uname -m)
 TARGET_ARCH ?= $(HOST_ARCH)
+OBJECTS = COR-predictor.o COR-
