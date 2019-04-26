@@ -29,12 +29,7 @@
 #include <vector>
 #include <float.h>
 #include <time.h>
-#include <bitset>
 #include <stdlib.h>
-#include <thread>
-#include <cuda.h>
-#include <curand.h>
-#include <curand_kernel.h>
 
 class COR_predictor
 {
