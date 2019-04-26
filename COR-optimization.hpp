@@ -23,11 +23,6 @@
 #ifndef COR_OPTIMIZATION_HPP_
 #define COR_OPTIMIZATION_HPP_
 
-#include <cuda.h>
-#include <curand.h>
-#include <curand_kernel.h>
-#include <k-hArray.hpp>
-
 class optimization : public COR_predictor
 {
 	public:	
