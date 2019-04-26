@@ -134,7 +134,7 @@ struct KernelArray
 		size_i = dVec.size();
 		size_j = 1;
 		size_k = 1;
-  }
+  	}
 	
 	KernelArray(thrust::host_vector<T>& dVec) 
 	{
