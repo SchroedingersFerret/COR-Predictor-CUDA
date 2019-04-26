@@ -20,6 +20,20 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <float.h>
+#include <time.h>
+#include <stdlib.h>
+#include <cuda.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/copy.h>
+
 class optimization : public COR_predictor
 {
 	public:	
