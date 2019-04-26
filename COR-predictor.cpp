@@ -20,6 +20,18 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <float.h>
+#include <time.h>
+#include <stdlib.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/copy.h>
+#include <k-hArray.hpp>
+
 //reads and applies settings
 void COR_predictor::Get_settings()
 {
