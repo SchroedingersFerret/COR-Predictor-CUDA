@@ -23,13 +23,7 @@
 #ifndef COR_PREDICTOR_HPP_
 #define COR_PREDICTOR_HPP_
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
 #include <vector>
-#include <float.h>
-#include <time.h>
-#include <stdlib.h>
 
 class COR_predictor
 {
