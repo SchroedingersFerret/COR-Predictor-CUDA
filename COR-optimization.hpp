@@ -26,9 +26,6 @@
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <thrust/copy.h>
 #include <k-hArray.hpp>
 
 class optimization : public COR_predictor
