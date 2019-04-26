@@ -31,6 +31,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
 #include <k-hArray.hpp>
+#include <COR-genetic.hpp>
 
 //reads and applies settings
 void COR_predictor::Get_settings()
