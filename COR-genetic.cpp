@@ -20,30 +20,10 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-class genetic : public optimization
-{
-	private:
-		static void Get_global_parameters(thrust::device_vector<float> &d_param);
-		static int partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
-		static void quicksort_index(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
-		static void Initiate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
-		static void shuffle(thrust::host_vector<int> &index);
-		static void tournament(HostArray<bool> &population, HostArray<float> &mean_squared);
-		static void reproduction(HostArray<bool> &population, HostArray<float> &mean_squared);
-		static void rankChromosomes(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
-		static void mutate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
-		static float percentDifference(HostArray<bool> &population, int i);
-		static float getDiversity(HostArray<bool> &population);
-		static void DivergenceError();
-		static void BottleneckError();
-		static void CheckDiversity(HostArray<bool> &population);
-		static void show_mean_squared(float mean_squared);
-	public:
-		__device__ static void Get_random_parameters(KernelArray<float> param, int i);
-		__device__ __host__ static void encode(KernelArray<bool> bin, KernelArray<float> param, int i);
-		__device__ __host__ static void decode(KernelArray<float>param, KernelArray<bool> bin, int i);
-		static void run();
-};
+#include <curand.h>
+#include <curand_kernel.h>
+#include <COR-optimization>
+#include <k-hArray.hpp>
 
 //encodes the parameters into an offset binary array
 __device__ __host__ void genetic::encode(KernelArray<bool> bin, KernelArray<float> param, int i)
