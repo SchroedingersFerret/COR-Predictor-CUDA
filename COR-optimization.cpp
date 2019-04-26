@@ -20,15 +20,6 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-class optimization : public COR_predictor
-{
-	public:	
-		static float RandInit();
-		__device__ __host__ static float Chebyshev(float x, KernelArray<float> param, int i, int j, float a, float b);
-		__device__ __host__ static float f(KernelArray<float> x, int xi, KernelArray<float> param, int i);	
-		__device__ __host__ static float Mean_square_error(KernelArray<float> x, KernelArray<float> y, KernelArray<float> param, int i);
-};
-
 //generates a random float between -1.0 and 1.0
 float optimization::RandInit()
 {
