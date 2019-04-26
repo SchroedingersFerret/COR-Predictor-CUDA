@@ -1,4 +1,11 @@
-CUDA_PATH ?= /usr/local/cuda
+HOST_COMPILER = 
+CUDA_PATH := /usr/local/cuda
 HOST_ARCH := $(shell uname -m)
 TARGET_ARCH ?= $(HOST_ARCH)
-OBJECTS = COR-predictor.o COR-
+OBJECTS = COR-predictor.o COR-optimization.o\
+          COR-genetic.o COR-anneal.o COR-main.o
+
+all : $(OBJECTS)
+  $(NVCC) $(GENCODE_FLAGS) -std=c++11 $(OBJECTS) -o COR-predictor
+ 
+
