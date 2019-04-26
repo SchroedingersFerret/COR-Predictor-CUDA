@@ -115,10 +115,11 @@ bool COR_predictor::random_parameters = false;
 bool COR_predictor::quit_cor = false;
 std::vector<std::vector<float> > COR_predictor::parameters_global(4,std::vector<float> (6));
 
-//Thanks to Ashwin on Code Yarns for this method: https://codeyarns.com/2011/04/09/how-to-pass-thrust-device-vector-to-kernel/
+/*Thanks to Ashwin on Code Yarns for this method: https://codeyarns.com/2011/04/09/how-to-pass-thrust-device-vector-to-kernel/
 
-//The Kernel Array structure is a way to convert higher dimensional arrays into 1-d arrays that the kernel can understand
-//The three size variables keep track of the dimensions of the original array
+The Kernel Array structure is a way to convert higher dimensional arrays into 1-d arrays that the kernel can understand
+The three size variables keep track of the dimensions of the original array*/
+
 template<typename T>
 struct KernelArray
 {
