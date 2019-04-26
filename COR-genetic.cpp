@@ -23,6 +23,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include <COR-optimization>
+#include <COR-anneal.hpp>
 #include <k-hArray.hpp>
 
 //encodes the parameters into an offset binary array
