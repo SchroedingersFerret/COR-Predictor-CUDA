@@ -20,19 +20,16 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <vector>
-#include <float.h>
-#include <time.h>
-#include <stdlib.h>
+#ifndef COR_OPTIMIZATION_HPP_
+#define COR_OPTIMIZATION_HPP_
+
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
+#include <k-hArray.hpp>
 
 class optimization : public COR_predictor
 {
@@ -42,3 +39,5 @@ class optimization : public COR_predictor
 		__device__ __host__ static float f(KernelArray<float> x, int xi, KernelArray<float> param, int i);	
 		__device__ __host__ static float Mean_square_error(KernelArray<float> x, KernelArray<float> y, KernelArray<float> param, int i);
 };
+
+#endif /* COR_OPTIMIZATION_HPP_ */
