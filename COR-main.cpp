@@ -20,11 +20,11 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "COR-predictor.hpp"
-#include "COR-optimization.hpp"
-#include "COR-anneal.cpp"
-#include "COR-genetic.cpp"
-#include "COR-predictor.cpp"
+#include <iostream>
+#include <time.h>
+#include <stdlib.h>
+#include <COR-predictor.hpp>
+
 int main()
 {
 	srand((unsigned int)time(NULL));
