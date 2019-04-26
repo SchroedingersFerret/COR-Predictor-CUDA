@@ -1,5 +1,5 @@
 /*
- * COR-anneal.cpp
+ * COR-anneal.hpp
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
