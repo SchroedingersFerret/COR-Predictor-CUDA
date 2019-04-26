@@ -22,9 +22,9 @@
 
 #include <curand.h>
 #include <curand_kernel.h>
-#include <COR-optimization>
-#include <COR-anneal.hpp>
 #include <k-hArray.hpp>
+#include <COR-genetic.hpp>
+#include <COR-anneal.hpp>
 
 //encodes the parameters into an offset binary array
 __device__ __host__ void genetic::encode(KernelArray<bool> bin, KernelArray<float> param, int i)
