@@ -1,10 +1,10 @@
 /*
- * COR-anneal.hpp
+ * COR-anneal.h
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
  */
- 
+
 //This file is part of COR-Predictor-CUDA.
 //
 //   COR-Predictor-CUDA is free software: you can redistribute it and/or modify
@@ -20,10 +20,17 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COR_ANNEAL_HPP_
-#define COR_ANNEAL_HPP_
+#ifndef COR_ANNEAL_H_
+#define COR_ANNEAL_H_
 
-class anneal : private optimization
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <thrust/copy.h>
+#include "COR-predictor.h"
+#include "COR-optimization.h"
+#include "k-hArray.h"
+
+class anneal : public optimization
 {
 	private:
 		static float Gaussian_move(float mean, float std_dev,int accepted);
@@ -34,4 +41,4 @@ class anneal : private optimization
 		static void run(thrust::host_vector<float> &old_state, KernelArray<float> &x, KernelArray<float> &y);
 };
 
-#endif /* COR_ANNEAL_HPP_ */
+#endif /* COR_ANNEAL_H_ */
