@@ -21,9 +21,23 @@
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include <time.h>
 #include <stdlib.h>
-#include <COR-predictor.hpp>
+#include <time.h>
+#include "COR-predictor.h"
+
+int COR_predictor::n_initial;
+int COR_predictor::n_gpool;
+int COR_predictor::n_repro;
+float COR_predictor::pm;
+int COR_predictor::n_elite;
+int COR_predictor::n_normal;
+int COR_predictor::n_data;
+float COR_predictor::error;
+std::vector<std::vector<float> > COR_predictor::independent;
+std::vector<float> COR_predictor::dependent;
+bool COR_predictor::random_parameters = false;
+bool COR_predictor::quit_cor = false;
+std::vector<std::vector<float> > COR_predictor::parameters_global(4,std::vector<float> (6));
 
 int main()
 {
