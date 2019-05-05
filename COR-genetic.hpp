@@ -1,10 +1,10 @@
 /*
- * COR-genetic.hpp
+ * COR-genetic.h
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
  */
- 
+
 //This file is part of COR-Predictor-CUDA.
 //
 //   COR-Predictor-CUDA is free software: you can redistribute it and/or modify
@@ -20,15 +20,21 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COR_GENETIC_HPP_
-#define COR_GENETIC_HPP_
+#ifndef COR_GENETIC_H_
+#define COR_GENETIC_H_
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include "k-hArray.h"
+#include "COR-optimization.h"
 
 class genetic : public optimization
 {
 	private:
 		static void Get_global_parameters(thrust::device_vector<float> &d_param);
-		static int partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
-		static void quicksort_index(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
+		//static void quicksort(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
 		static void Initiate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
 		static void shuffle(thrust::host_vector<int> &index);
 		static void tournament(HostArray<bool> &population, HostArray<float> &mean_squared);
@@ -42,10 +48,11 @@ class genetic : public optimization
 		static void CheckDiversity(HostArray<bool> &population);
 		static void show_mean_squared(float mean_squared);
 	public:
+		__device__ static int partition(KernelArray<float> cost, KernelArray<int> index, int low, int high);
 		__device__ static void Get_random_parameters(KernelArray<float> param, int i);
 		__device__ __host__ static void encode(KernelArray<bool> bin, KernelArray<float> param, int i);
 		__device__ __host__ static void decode(KernelArray<float>param, KernelArray<bool> bin, int i);
 		static void run();
 };
 
-#endif /* COR_GENETIC_HPP_ */
+#endif /* COR_GENETIC_H_ */
