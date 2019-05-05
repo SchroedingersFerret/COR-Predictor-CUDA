@@ -1,5 +1,5 @@
 /*
- * COR-predictor.hpp
+ * COR-predictor.h
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
@@ -20,8 +20,8 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef COR_PREDICTOR_HPP_
-#define COR_PREDICTOR_HPP_
+#ifndef COR_PREDICTOR_H_
+#define COR_PREDICTOR_H_
 
 #include <vector>
 
@@ -49,7 +49,7 @@ class COR_predictor
 		static void Predict();
 		static void Show_main_menu();
 		static int Set_mode(char input);
-		
+
 	public:
 		//initial population size
 		static int n_initial;
@@ -79,7 +79,7 @@ class COR_predictor
 		static bool quit_cor;
 		//parameter array
 		static std::vector<std::vector<float> > parameters_global;
-		
+
 		static void Get_settings();
 		static void Get_independent();
 		static void Get_dependent();
@@ -87,18 +87,4 @@ class COR_predictor
 		static void Main_menu();
 };
 
-int COR_predictor::n_initial;
-int COR_predictor::n_gpool;
-int COR_predictor::n_repro;
-float COR_predictor::pm;
-int COR_predictor::n_elite;
-int COR_predictor::n_normal;
-int COR_predictor::n_data;
-float COR_predictor::error;
-std::vector<std::vector<float> > COR_predictor::independent;
-std::vector<float> COR_predictor::dependent;
-bool COR_predictor::random_parameters = false;
-bool COR_predictor::quit_cor = false;
-std::vector<std::vector<float> > COR_predictor::parameters_global(4,std::vector<float> (6));
-
-#endif /* COR_PREDICTOR_HPP_ */
+#endif /* COR_PREDICTOR_H_ */
