@@ -4,7 +4,7 @@
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
  */
- 
+
 //This file is part of COR-Predictor-CUDA.
 //
 //   COR-Predictor-CUDA is free software: you can redistribute it and/or modify
@@ -22,16 +22,14 @@
 
 #include <iostream>
 #include <fstream>
-#include <cmath>
-#include <vector>
-#include <float.h>
 #include <time.h>
 #include <stdlib.h>
+#include <vector>
 #include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <thrust/copy.h>
-#include <k-hArray.hpp>
-#include <COR-genetic.hpp>
+#include "k-hArray.h"
+#include "COR-predictor.h"
+#include "COR-optimization.h"
+#include "COR-genetic.h"
 
 //reads and applies settings
 void COR_predictor::Get_settings()
@@ -44,7 +42,7 @@ void COR_predictor::Get_settings()
 		abort();
 	}
 	char ch;
-	
+
 	do
 	{
 		fin.get(ch);
@@ -64,7 +62,7 @@ void COR_predictor::Get_settings()
 	}while(ch!='=');
 	fin >> n_elite;
 	n_normal = n_gpool-n_elite;
-	
+
 	do
 	{
 		fin >> ch;
@@ -111,7 +109,7 @@ std::vector<std::vector<float> > COR_predictor::read_csv2d(const char * filename
 	fin.open(filename);
 	while(!fin.eof())
 	{
-		
+
 		if (fin.peek() == ',' || fin.peek() == '\n')
 		{
 			char ch;
@@ -177,9 +175,9 @@ void COR_predictor::Get_independent()
 		std::cout << "Error: File 'cor_independent.csv' not found.\n";
 		abort();
 	}
-	
+
 	independent = read_csv2d("cor_independent.csv");
-	
+
 	if (independent[0].size() != 7)
 	{
 		std::cout << "Error: File 'cor_independent.csv' must be of dimension n*7.\n";
@@ -187,7 +185,7 @@ void COR_predictor::Get_independent()
 	}
 	n_data = independent.size();
 }
-	
+
 //reads the dependent variables of the training datapoints
 void COR_predictor::Get_dependent()
 {
@@ -199,7 +197,7 @@ void COR_predictor::Get_dependent()
 		std::cout << "Error: File 'cor_dependent.csv' not found.\n";
 		abort();
 	}
-	
+
 	dependent = read_csv1d("cor_dependent.csv");
 
 	if (dependent.size() != independent.size())
@@ -207,7 +205,7 @@ void COR_predictor::Get_dependent()
 		std::cout << "Error: Files 'cor_independent.csv' and 'cor_dependent.csv' must have the same number of entries.\n";
 		abort();
 	}
-	
+
 	for (int i=0; i<n_data; ++i)
 	{
 		if (dependent[i]<0.f || dependent[i]>1.f)
@@ -232,7 +230,7 @@ void COR_predictor::Get_parameters()
 			std::cout << "Error: File 'cor_parameters.csv' must be of dimensions " << parameters_global.size() << "*" << parameters_global[0].size() << ".\n";
 			abort();
 		}
-		parameters_global = temp;	
+		parameters_global = temp;
 	}
 }
 
@@ -246,50 +244,50 @@ void COR_predictor::Point_entry()
 	std::cin.get();
 	std::cout << "\n";
 	new_point[0] = input;
-	
+
 	std::cout << "Enter the yield strength of the second object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[1] = input;
-	
+
 	std::cout << "Enter the Young's modulus of the first object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[2] = input;
-	
+
 	std::cout << "Enter the Young's modulus of the second object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[3] = input;
-	
+
 	std::cout << "Enter the density of the first object.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[4] = input;
-	
+
 	std::cout << "Enter the density of the second object.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[5] = input;
-	
+
 	std::cout << "Enter the objects' relative velocity in m/s.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	new_point[6] = input;
-	
+
 	independent.push_back(new_point);
-	
+
 	std::cout << "Enter the coefficient of restitution.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
-	
+
 	dependent.push_back(input);
 }
 
@@ -372,7 +370,7 @@ bool COR_predictor::Return_quit()
 	std::cout << "\n";
 	return quit;
 }
-	
+
 //training datapoint entry
 void COR_predictor::Enter()
 {
@@ -384,7 +382,7 @@ void COR_predictor::Enter()
 		write_csv1d(dependent,"cor_dependent.csv");
 		enter_point = Enter_more();
 	}
-	
+
 	quit_cor = Return_quit();
 }
 
@@ -407,7 +405,7 @@ bool COR_predictor::Set_random(char input)
 //returns a boolean operator to instruct program whether to randomize elite population
 bool COR_predictor::Use_random()
 {
-	
+
 	std::ifstream fin;
 	fin.open("cor_parameters.csv");
 	fin.close();
@@ -417,12 +415,12 @@ bool COR_predictor::Use_random()
 		std::cout << "Initiating with random values. (Convergence will take longer)\n\n";
 		return true;
 	}
-	
+
 	std::cout << "File: 'cor_parameters.csv' found.\n\n";
 	bool random = true;
 	std::cout << "Initiate with these values?\nEnter y/n: ";
 	char input;
-	
+
 	while(std::cin.get(input))
 	{
 		char dummy[30];
@@ -472,14 +470,14 @@ bool COR_predictor::Set_write(char input)
 		default	:	throw "\nInvalid input\nEnter y/n: ";
 	}
 }
-	
+
 //runs Set_write() and writes parameters to file depending on user input
 void COR_predictor::Write_parameters(std::vector<std::vector<float> > param)
 {
 	bool write = false;
 	std::cout << "Write these parameters to 'cor_parameters.csv'?\nPrevious values will be overwritten.\nEnter y/n: ";
 	char input;
-	
+
 	while(std::cin.get(input))
 	{
 		char dummy[30];
@@ -496,7 +494,7 @@ void COR_predictor::Write_parameters(std::vector<std::vector<float> > param)
 		}
 		break;
 	}
-	
+
 	if (write)
 	{
 		write_csv2d(param,"cor_parameters.csv");
@@ -545,45 +543,45 @@ std::vector<float> COR_predictor::pGet_independent()
 	std::cin.get();
 	std::cout << "\n";
 	x[0] = input;
-	
+
 	std::cout << "Enter the yield strength of the second object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[1] = input;
-	
+
 	std::cout << "Enter the Young's modulus of the first object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[2] = input;
-	
+
 	std::cout << "Enter the Young's modulus of the second object in GPa.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[3] = input;
-	
+
 	std::cout << "Enter the density of the first object.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[4] = input;
-	
+
 	std::cout << "Enter the density of the second object.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[5] = input;
-	
+
 	std::cout << "Enter the objects' relative velocity in m/s.\n";
 	std::cin >> input;
 	std::cin.get();
 	std::cout << "\n";
 	x[6] = input;
-	
+
 	return x;
-}	
+}
 
 //predicts a coefficient of restitution
 void COR_predictor::Predict()
@@ -598,7 +596,7 @@ void COR_predictor::Predict()
 	std::cout.setf(std::ios::fixed, std::ios::floatfield);
 	std::cout << "e = " << pred_y << "\n\n";
 	quit_cor = Return_quit();
-}	
+}
 
 //shows the main menu
 void COR_predictor::Show_main_menu()
@@ -624,7 +622,7 @@ int COR_predictor::Set_mode(char input)
 
 		default : 	throw "Invalid input. Please enter '1','2','3', or '4'.\n\n";
 	}
-}	
+}
 
 //user can select mode of operation from the main menu
 void COR_predictor::Main_menu()
@@ -648,7 +646,7 @@ void COR_predictor::Main_menu()
 		}
 		break;
 	}
-		
+
 	switch(mode)
 	{
 		case 1 	:  	Enter();
@@ -658,8 +656,7 @@ void COR_predictor::Main_menu()
 		case 3  :  	Predict();
 					break;
 		case 4  :  	quit_cor = true;
-					break;	
+					break;
 		default : 	break;
 	}
 }
-
