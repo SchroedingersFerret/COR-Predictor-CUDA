@@ -1,10 +1,10 @@
 /*
- * COR-optimization.cpp
+ * COR-optimization.cu
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
  */
- 
+
 //This file is part of COR-Predictor-CUDA.
 //
 //   COR-Predictor-CUDA is free software: you can redistribute it and/or modify
@@ -20,9 +20,10 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <cuda.h>
-#include <COR-predictor.hpp>
-#include <k-hArray.hpp>
+#include <cmath>
+#include <cuda_runtime.h>
+#include "k-hArray.h"
+#include "COR-optimization.h"
 
 //generates a random float between -1.0 and 1.0
 float optimization::RandInit()
@@ -72,7 +73,7 @@ __device__ __host__ float optimization::Mean_square_error(KernelArray<float> x, 
 	{
 		float yi = f(x,xi,param,i);
 		float residual = y.array[xi]-yi;
-		if (isnan(residual))
+		if (isnanf(residual))
 			residual = 1.f;
 		sum += residual*residual;
 	}
