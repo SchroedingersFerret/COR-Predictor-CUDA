@@ -73,9 +73,10 @@ __device__ __host__ float optimization::Mean_square_error(KernelArray<float> x, 
 	{
 		float yi = f(x,xi,param,i);
 		float residual = y.array[xi]-yi;
-		if (isnanf(residual))
+		if (isnan(residual))
 			residual = 1.f;
 		sum += residual*residual;
 	}
 	return sum/y.size_i;
 }
+
