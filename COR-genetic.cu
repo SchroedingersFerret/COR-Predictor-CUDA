@@ -35,10 +35,8 @@
 #include <curand_kernel.h>
 #include <thread>
 #include "k-hArray.h"
-#include "COR-predictor.h"
-#include "COR-optimization.h"
-#include "COR-anneal.h"
 #include "COR-genetic.h"
+#include "COR-anneal.h"
 
 //encodes the parameters into an offset binary array
 __device__ __host__ void genetic::encode(KernelArray<bool> bin, KernelArray<float> param, int i)
