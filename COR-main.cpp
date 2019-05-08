@@ -23,6 +23,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 #include "COR-predictor.h"
 
 int COR_predictor::n_initial;
