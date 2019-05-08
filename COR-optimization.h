@@ -25,8 +25,9 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include "COR-predictor.h"
 #include "k-hArray.h"
+#include "COR-predictor.h"
+
 
 class optimization : public COR_predictor
 {
