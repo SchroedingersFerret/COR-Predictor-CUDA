@@ -20,15 +20,13 @@
 //   You should have received a copy of the GNU General Public License
 //   along with COR-Predictor-CUDA.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "k-hArray.h"
 #include <cmath>
 #include <float.h>
 #include <stdlib.h>
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include "COR-predictor.h"
-#include "COR-optimization.h"
+#include "k-hArray.h"
 #include "COR-anneal.h"
 
 //returns a random number from an gaussian distribution
