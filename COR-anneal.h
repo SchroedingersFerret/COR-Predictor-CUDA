@@ -26,9 +26,9 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/copy.h>
+#include "k-hArray.h"
 #include "COR-predictor.h"
 #include "COR-optimization.h"
-#include "k-hArray.h"
 
 class anneal : public optimization
 {
