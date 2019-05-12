@@ -39,7 +39,7 @@
 #include "COR-anneal.h"
 
 //encodes the parameters into an offset binary array
-__device__ __host__ void genetic::encode(KernelArray<bool> bin, KernelArray<float> param, int i)
+__device__ __host__ void genetic::encode(KernelArray<bool> &bin, KernelArray<float> &param, int i)
 {
 	for (int j=0; j<param.size_j; ++j)
 	{
@@ -70,7 +70,7 @@ __device__ __host__ void genetic::encode(KernelArray<bool> bin, KernelArray<floa
 }
 
 //recovers the parameters from a binary chromosome
-__device__ __host__ void genetic::decode(KernelArray<float> param, KernelArray<bool> bin, int i)
+__device__ __host__ void genetic::decode(KernelArray<float> &param, KernelArray<bool> &bin, int i)
 {
 	for (int j=0; j<param.size_j; ++j)
 	{
@@ -93,7 +93,7 @@ __device__ __host__ void genetic::decode(KernelArray<float> param, KernelArray<b
 }
 
 //fills a parameter array with random floats
-__device__ void genetic::Get_random_parameters(KernelArray<float> param, int i)
+__device__ void genetic::Get_random_parameters(KernelArray<float> &param, int i)
 {
 	unsigned int seed = (unsigned long long)clock() + threadIdx.x + (blockIdx.x*blockDim.x);
 	curandState_t state;
@@ -144,46 +144,56 @@ __global__ void initiate_kernel(KernelArray<bool> bin, KernelArray<float> param,
 }
 
 //partition function for quicksort_index
-__device__ int genetic::partition(KernelArray<float> cost, KernelArray<int> index, int low, int high) // @suppress("No return")
+int genetic::partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int &low, int &high) // @suppress("No return")
 {
-	float pivot = cost.array[(int)(low + high)/2];
+	float pivot = cost[(int)(low + high)/2];
 	int i = low - 1;
 	int j = high + 1;
 	for(;;)
 	{
 		do
 			i++;
-		while (cost.array[i] < pivot);
+		while (cost[i] < pivot);
 
 		do
 			j--;
-		while (cost.array[j] > pivot);
+		while (cost[j] > pivot);
 
 		if (i >= j)
 			return j;
 
-		float temp_f = cost.array[i];
-		cost.array[i] = cost.array[j];
-		cost.array[j] = temp_f;
+		float temp_f = cost[i];
+		cost[i] = cost[j];
+		cost[j] = temp_f;
 
-		int temp_i = index.array[i];
-		index.array[i] = index.array[j];
-		index.array[j] = temp_i;
+		int temp_i = index[i];
+		index[i] = index[j];
+		index[j] = temp_i;
 	}
 }
-
+/*
 //quicksorts indices by cost
-__global__ void quicksort(KernelArray<float> cost, KernelArray<int> index, int low, int high)
+void genetic::sort_thread(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high)
 {
 	if (low < high)
 	{
-		int pi = genetic::partition(cost, index, low, high);
-		quicksort<<<1,1>>>(cost, index, low, pi);
-		quicksort<<<1,1>>>(cost, index, pi+1, high);
+		int p = partition(cost, index, low, high);
+		std::thread t(&sort_thread, std::ref(cost), std::ref(index), low, p);
+		t.detach();
+		sort_thread(cost, index, p+1, high);
 	}
 }
+*/
+void genetic::quicksort(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high)
+{
 
-
+	if (low < high)
+	{
+		int p = partition(cost, index, low, high);
+		quicksort(cost, index, low, p);
+		quicksort(cost, index, p+1, high);
+	}
+}
 //Kernel for arranging the population and MSE's in the order of the quicksorted indices
 __global__ void rearrange_kernel(KernelArray<bool> population, KernelArray<bool> bin, KernelArray<float> mean_squared, KernelArray<float> cost, KernelArray<int> index)
 {
@@ -193,7 +203,6 @@ __global__ void rearrange_kernel(KernelArray<bool> population, KernelArray<bool>
 			population.array[k + population.size_k*(j + population.size_j*i)] = bin.array[k + population.size_k*(j + population.size_j*index.array[i])];
 
 	mean_squared.array[i] = cost.array[i];
-	__syncthreads();
 }
 
 //initiates genetic algorithm
@@ -201,34 +210,43 @@ void genetic::Initiate(HostArray<bool> &population, HostArray<float> &mean_squar
 {
 	//allocate device memory
 	thrust::device_vector<bool> bin(n_initial*population.size_j*population.size_k);
+	KernelArray<bool> k_bin = convertToKernel(bin,n_initial,population.size_j,population.size_k);
 	thrust::device_vector<float> param(n_initial*parameters_global.size()*parameters_global[0].size());
-	thrust::device_vector<float> cost(n_initial);
-	thrust::device_vector<int> index(n_initial);
+
+	thrust::device_vector<float> d_cost(n_initial);
+	KernelArray<float> k_cost = d_cost;
+	thrust::device_vector<int> d_index(n_initial);
+	KernelArray<int> k_index = d_index;
 
 	Get_global_parameters(param);
 
 	//fills the elite population with the parameters read from file unless user specifies an entirely random population
-	initiate_kernel<<<1,n_elite>>>(convertToKernel(bin,n_initial,population.size_j,population.size_k),
-									convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
-									x,y,cost,index,random_parameters,0);
-
+	initiate_kernel<<<1,n_elite>>>(k_bin, convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
+									x, y, k_cost, k_index, random_parameters, 0);
 
 	random_parameters = true;
 
 	//The remaining population is initialized randomly
-	initiate_kernel<<<1,n_initial-n_elite >>>(convertToKernel(bin,n_initial,population.size_j,population.size_k),
-									convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
-									x,y,cost,index,random_parameters,n_elite);
+	initiate_kernel<<<1,n_initial-n_elite >>>(k_bin, convertToKernel(param,n_initial,parameters_global.size(),parameters_global[0].size()),
+												x, y, k_cost,k_index, random_parameters, n_elite);
+	cudaDeviceSynchronize();
+
+	thrust::host_vector<float> h_cost = d_cost;
+	thrust::host_vector<int> h_index = d_index;
 
 	//sorts population by cost
-	quicksort<<<1,1>>>(cost,index, 0, n_initial-1);
+	quicksort(h_cost,h_index, 0, n_initial-1);
+
+	d_cost = h_cost;
+	d_index = h_index;
 
 	thrust::device_vector<bool> d_population(population.size_i*population.size_j*population.size_k);
+	KernelArray<bool> k_population = convertToKernel(d_population, n_gpool, population.size_j, population.size_k);
 	thrust::device_vector<float> d_mean_squared(n_gpool);
+	KernelArray<float> k_mean_squared = d_mean_squared;
 
-	rearrange_kernel<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
-						convertToKernel(bin, n_initial, population.size_j, population.size_k),
-						d_mean_squared, cost, index);
+	rearrange_kernel<<<1, n_gpool>>>(k_population, k_bin, k_mean_squared, k_cost, k_index);
+	cudaDeviceSynchronize();
 
 	//copy to host
 	population.array = d_population;
@@ -278,9 +296,13 @@ void genetic::tournament(HostArray<bool>  &population, HostArray<float> &mean_sq
 {
 	//allocate device memory and initialize
 	thrust::device_vector<bool> d_population = population.array;
+	KernelArray<bool> k_population = convertToKernel(d_population, population.size_i, population.size_j, population.size_k);
 	thrust::device_vector<bool> bin = population.array;
+	KernelArray<bool> k_bin = convertToKernel(bin, population.size_i, population.size_j, population.size_k);
 	thrust::device_vector<float> d_mean_squared = mean_squared.array;
+	KernelArray<float> k_mean_squared = d_mean_squared;
 	thrust::device_vector<float> cost = mean_squared.array;
+	KernelArray<float> k_cost = cost;
 
 	//initialize index
 	thrust::host_vector<int> h_index(n_gpool);
@@ -292,11 +314,11 @@ void genetic::tournament(HostArray<bool>  &population, HostArray<float> &mean_sq
 
 	//copy shuffled index to device
 	thrust::device_vector<int> index = h_index;
+	KernelArray<int> k_index = index;
 
 	//run tournaments
-	tourney_kernel<<<1,n_repro>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
-									convertToKernel(d_population, population.size_i, population.size_j, population.size_k),
-									d_mean_squared,cost,index);
+	tourney_kernel<<<1,n_repro>>>(k_bin, k_population, k_mean_squared, k_cost, k_index);
+	cudaDeviceSynchronize();
 
 	//copy to host
 	population.array = d_population;
@@ -344,9 +366,11 @@ void genetic::reproduction(HostArray<bool> &population, HostArray<float> &mean_s
 
 	//allocate memory and initialize
 	thrust::device_vector<bool> bin = population.array;
+	KernelArray<bool> k_bin = convertToKernel(bin,population.size_i, population.size_j, population.size_k);
 
 	//perform reproduction ( ͡° ͜ʖ ͡°)
-	repro_kernel<<<1,n_repro2>>>(convertToKernel(bin,population.size_i,population.size_j, population.size_k),n_repro,n_repro2);
+	repro_kernel<<<1,n_repro2>>>(k_bin, n_repro, n_repro2);
+	cudaDeviceSynchronize();
 
 	//copy to host
 	population.array = bin;
@@ -366,23 +390,33 @@ void genetic::rankChromosomes(HostArray<bool> &population, HostArray<float> &mea
 {
 	//allocate device memory
 	thrust::device_vector<bool> d_population(population.size_i*population.size_j*population.size_k);
+	KernelArray<bool> k_population = convertToKernel(d_population, n_gpool, population.size_j, population.size_k);
 	thrust::device_vector<bool> bin = population.array;
+	KernelArray<bool> k_bin = convertToKernel(bin,n_gpool, population.size_j, population.size_k);
 	thrust::device_vector<float> d_mean_squared(mean_squared.size_i*mean_squared.size_j*mean_squared.size_k);
-	thrust::device_vector<float> cost = mean_squared.array;
+	KernelArray<float> k_mean_squared = convertToKernel(d_mean_squared, mean_squared.size_i, mean_squared.size_j, mean_squared.size_k);
+	thrust::device_vector<float> d_cost = mean_squared.array;
+	KernelArray<float> k_cost = d_cost;
 	thrust::device_vector<float> param(n_gpool*parameters_global.size()*parameters_global[0].size());
-	thrust::device_vector<int> index(n_gpool);
+	thrust::device_vector<int> d_index(n_gpool);
+	KernelArray<int> k_index = d_index;
 
 	//evaluate cost of each array
-	eval_kernel<<<1,n_gpool>>>(convertToKernel(bin,population.size_i, population.size_j, population.size_k),
-								convertToKernel(param,n_gpool,parameters_global.size(),parameters_global[0].size()),
-								x,y,cost,index);
-	//sort population by cost
-	//sorts population by cost
-	quicksort<<<1,1>>>(cost,index, 0, n_initial-1);
+	eval_kernel<<<1,n_gpool>>>(k_bin, convertToKernel(param,n_gpool,parameters_global.size(),parameters_global[0].size()),
+								x, y, k_cost, k_index);
+	cudaDeviceSynchronize();
 
-	rearrange_kernel<<<1, n_gpool>>>(convertToKernel(d_population, n_gpool, population.size_j, population.size_k),
-						convertToKernel(bin, n_gpool, population.size_j, population.size_k),
-						d_mean_squared, cost, index);
+	thrust::host_vector<float> h_cost = d_cost;
+	thrust::host_vector<int> h_index = d_index;
+
+	//sorts population by cost
+	quicksort(h_cost,h_index, 0, n_gpool-1);
+
+	d_cost = h_cost;
+	d_index = h_index;
+
+	rearrange_kernel<<<1, n_gpool>>>(k_population, k_bin, k_mean_squared, k_cost, k_index);
+	cudaDeviceSynchronize();
 
 	//copy to host
 	population.array = d_population;
@@ -446,20 +480,22 @@ void genetic::mutate(HostArray<bool> &population, HostArray<float> &mean_squared
 
 	//allocate memory
 	thrust::device_vector<bool> bin = population.array;
+	KernelArray<bool> k_bin = convertToKernel(bin, population.size_i, population.size_j, population.size_k);
 	thrust::device_vector<float> cost = mean_squared.array;
+	KernelArray<float> k_cost = cost;
 	thrust::device_vector<float> param(n_gpool*parameters_global.size()*parameters_global[0].size());
 
 	int iterations = (int) (population.size_j*population.size_k*pm+1);
 
 	//mutate elite population
-	elite_kernel<<<1, n_elite>>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k),
-								convertToKernel(param, n_gpool, parameters_global.size(), parameters_global[0].size()),
-								x, y, cost, n_elite, iterations);
+	elite_kernel<<<1, n_elite>>>(k_bin, convertToKernel(param, n_gpool, parameters_global.size(), parameters_global[0].size()),
+								x, y, k_cost, n_elite, iterations);
 
 	int num_blocks = (int) (n_normal*population.size_j*population.size_k*pm+1)/100;
 
 	//mutate normal population
-	normal_kernel<<<num_blocks, 100 >>>(convertToKernel(bin, population.size_i, population.size_j, population.size_k), n_elite, n_normal);
+	normal_kernel<<<num_blocks, 100 >>>(k_bin, n_elite, n_normal);
+	cudaDeviceSynchronize();
 
 	//copy to host
 	population.array = bin;
@@ -574,8 +610,6 @@ void genetic::run()
 
 	while(mean_squared_error.array[0] > error && !stop)
 	{
-		rankChromosomes(binary_population, mean_squared_error, d_x, d_y);
-
 		tournament(binary_population, mean_squared_error);
 
 		reproduction(binary_population, mean_squared_error);
@@ -588,15 +622,14 @@ void genetic::run()
 			CheckDiversity(binary_population);
 
 			thrust::host_vector<float> param(parameters_global.size()*parameters_global[0].size());
-
-			decode(convertToKernel(param,1,parameters_global.size(), parameters_global[0].size()),
-									convertToKernel(binary_population.array, binary_population.size_i, binary_population.size_j, binary_population.size_k), 0);
+			KernelArray<float> k_param = convertToKernel(param,1,parameters_global.size(), parameters_global[0].size());
+			KernelArray<bool> k_population = convertToKernel(binary_population.array, binary_population.size_i, binary_population.size_j, binary_population.size_k);
+			decode(k_param, k_population, 0);
 
 			anneal::run(param, h_x, h_y);
 			float cost = Mean_square_error(h_x, h_y,convertToKernel(param,parameters_global.size(), parameters_global[0].size(), 1), 0);
 
-			encode(convertToKernel(binary_population.array, binary_population.size_i, binary_population.size_j, binary_population.size_k),
-									convertToKernel(param, parameters_global.size(), parameters_global[0].size(), 1), n_elite-1);
+			encode(k_population, k_param, 0);
 
 			mean_squared_error.array[n_elite-1] = cost;
 
@@ -619,7 +652,8 @@ void genetic::run()
 	};
 	stop_loop.join();
 	thrust::host_vector<float> param(parameters_global.size()*parameters_global[0].size());
-	decode(convertToKernel(param,1,parameters_global.size(),parameters_global[0].size()),
-			convertToKernel(binary_population.array,binary_population.size_i,binary_population.size_j,binary_population.size_k),0);
+	KernelArray<float> k_param = convertToKernel(param,1,parameters_global.size(), parameters_global[0].size());
+	KernelArray<bool> k_population = convertToKernel(binary_population.array, binary_population.size_i, binary_population.size_j, binary_population.size_k);
+	decode(k_param, k_population,0);
 	parameters_global = recover2d(param,parameters_global.size(),parameters_global[0].size());
 }
