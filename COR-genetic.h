@@ -34,7 +34,9 @@ class genetic : public optimization
 {
 	private:
 		static void Get_global_parameters(thrust::device_vector<float> &d_param);
-		//static void quicksort(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
+		static int partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int &low, int &high);
+		static void sort_thread(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
+		static void quicksort(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
 		static void Initiate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
 		static void shuffle(thrust::host_vector<int> &index);
 		static void tournament(HostArray<bool> &population, HostArray<float> &mean_squared);
@@ -48,10 +50,10 @@ class genetic : public optimization
 		static void CheckDiversity(HostArray<bool> &population);
 		static void show_mean_squared(float mean_squared);
 	public:
-		__device__ static int partition(KernelArray<float> cost, KernelArray<int> index, int low, int high);
-		__device__ static void Get_random_parameters(KernelArray<float> param, int i);
-		__device__ __host__ static void encode(KernelArray<bool> bin, KernelArray<float> param, int i);
-		__device__ __host__ static void decode(KernelArray<float>param, KernelArray<bool> bin, int i);
+
+		__device__ static void Get_random_parameters(KernelArray<float> &param, int i);
+		__device__ __host__ static void encode(KernelArray<bool> &bin, KernelArray<float> &param, int i);
+		__device__ __host__ static void decode(KernelArray<float> &param, KernelArray<bool> &bin, int i);
 		static void run();
 };
 
