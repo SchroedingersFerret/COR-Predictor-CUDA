@@ -32,6 +32,65 @@
 The Kernel Array structure is a way to convert higher dimensional arrays into 1-d arrays that the kernel can understand
 The three size variables keep track of the dimensions of the original array*/
 
+
+
+
+template<typename T>
+struct DeviceArray
+{
+	thrust::device_vector<T> array;
+	size_t size_i;
+	size_t size_j;
+	size_t size_k;
+	DeviceArray(size_t array_size, size_t i, size_t j, size_t k)
+	{
+		array.resize(array_size);
+		size_i = i;
+		size_j = j;
+		size_k = k;
+	}
+	DeviceArray(){}
+};
+
+template<typename T>
+struct HostArray
+{
+	thrust::host_vector<T> array;
+	size_t size_i;
+	size_t size_j;
+	size_t size_k;
+	HostArray(size_t array_size, size_t i, size_t j, size_t k)
+	{
+		array.resize(array_size);
+		size_i = i;
+		size_j = j;
+		size_k = k;
+	}
+	HostArray(){}
+};
+
+template<typename T>
+DeviceArray<T> convertToDevice(HostArray<T> &hArr)
+{
+	DeviceArray<T> dArr;
+	dArr.array = hArr.array;
+	dArr.size_i = hArr.size_i;
+	dArr.size_j = hArr.size_j;
+	dArr.size_k = hArr.size_k;
+	return dArr;
+}
+
+template<typename T>
+HostArray<T> convertToHost(DeviceArray<T> &dArr)
+{
+	HostArray<T> hArr;
+	hArr.array = dArr.array;
+	hArr.size_i = dArr.size_i;
+	hArr.size_j = dArr.size_j;
+	hArr.size_k = dArr.size_k;
+	return hArr;
+}
+
 template<typename T>
 struct KernelArray
 {
@@ -39,6 +98,22 @@ struct KernelArray
 	size_t size_i;
 	size_t size_j;
 	size_t size_k;
+
+	KernelArray(DeviceArray<T>& dArr)
+	{
+		array = thrust::raw_pointer_cast(&dArr.array[0]);
+		size_i = dArr.size_i;
+		size_j = dArr.size_j;
+		size_k = dArr.size_k;
+	}
+
+	KernelArray(HostArray<T>& hArr)
+	{
+		array = thrust::raw_pointer_cast(&hArr.array[0]);
+		size_i = hArr.size_i;
+		size_j = hArr.size_j;
+		size_k = hArr.size_k;
+	}
 
 	KernelArray(thrust::device_vector<T>& dVec)
 	{
@@ -56,15 +131,6 @@ struct KernelArray
 		size_k = 1;
 	}
 	KernelArray(){};
-};
-
-template<typename T>
-struct HostArray
-{
-	thrust::host_vector<T> array;
-	size_t size_i;
-	size_t size_j;
-	size_t size_k;
 };
 
 template <typename T>
