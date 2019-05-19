@@ -41,17 +41,18 @@ float anneal::Gaussian_move(float mean, float error, int accepted)
 		xx = x*x;
 	}while(xx >= 5.f-5.13610166675097*u &&
 		(xx <= 1.036961042583566/u+1.4 || xx <= -4*log(u)));
-	return mean + error*v/u*1.f/(n_data*(1+accepted));
+	
+	return mean + 0.1*(v/u)*mean*exp(-sqrt(accepted));
 }
 
 //returns neighboring state
-thrust::host_vector<float> anneal::neighbor(thrust::host_vector<float> &old_state, float error, int accepted)
+HostArray<float> anneal::neighbor(HostArray<float> &old_state, float error, int accepted)
 {
-	thrust::host_vector<float> neighbor(parameters_global.size()*parameters_global[0].size());
-	size_t ni = old_state.size();
+	HostArray<float> neighbor = old_state;
+	size_t ni = neighbor.size_i*neighbor.size_j*neighbor.size_k;
 	for (int i=0; i<ni; ++i)
 	{
-		neighbor[i] = Gaussian_move(old_state[i],error,accepted);
+		neighbor.array[i] = Gaussian_move(old_state.array[i],error,accepted);
 	}
 	return neighbor;
 }
@@ -69,22 +70,20 @@ float anneal::rand_float()
 }
 
 //runs simulated annealing to make aid in optimization
-void anneal::run(thrust::host_vector<float> &old_state, KernelArray<float> &x, KernelArray<float> &y)
+void anneal::run(HostArray<float> &old_state, KernelArray<float> &x, KernelArray<float> &y)
 {
-	float old_energy = Mean_square_error(x,y,
-			convertToKernel(old_state,1,parameters_global.size(),parameters_global[0].size()),0);
+	float old_energy = Mean_square_error(x,y,old_state,0);
 	float initial_temperature = FLT_MAX*old_energy;
 	float old_temperature = initial_temperature;
-	int accepted = 0;
+	int accepted = 2;
 	int iterations = 0;
 
-	while (old_temperature > 0 && iterations < 10000)
+	while (old_temperature > 0 && iterations < 20000)
 	{
 
-		thrust::host_vector<float> new_state = neighbor(old_state,error,accepted);
+		HostArray<float> new_state = neighbor(old_state,error,old_temperature);
 
-		float new_energy = Mean_square_error(x,y,
-				convertToKernel(new_state,1,parameters_global.size(),parameters_global[0].size()),0);
+		float new_energy = Mean_square_error(x,y,new_state,0);
 		float delta_energy = new_energy-old_energy;
 		float new_temperature = Temperature(old_temperature,accepted);
 
