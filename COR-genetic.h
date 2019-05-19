@@ -33,16 +33,14 @@
 class genetic : public optimization
 {
 	private:
-		static void Get_global_parameters(thrust::device_vector<float> &d_param);
-		static int partition(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int &low, int &high);
-		static void sort_thread(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
-		static void quicksort(thrust::host_vector<float> &cost, thrust::host_vector<int> &index, int low, int high);
-		static void Initiate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
-		static void shuffle(thrust::host_vector<int> &index);
-		static void tournament(HostArray<bool> &population, HostArray<float> &mean_squared);
-		static void reproduction(HostArray<bool> &population, HostArray<float> &mean_squared);
-		static void rankChromosomes(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
-		static void mutate(HostArray<bool> &population, HostArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
+		static void Get_global_parameters(DeviceArray<float> &d_param);
+		static void quicksort(DeviceArray<float> &cost, DeviceArray<int> &index);
+		static void Initiate(DeviceArray<bool> &population, DeviceArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
+		static void shuffle(HostArray<int> &index);
+		static void tournament(DeviceArray<bool> &population, DeviceArray<float> &mean_squared);
+		static void reproduction(DeviceArray<bool> &population);
+		static void rankChromosomes(DeviceArray<bool> &population, DeviceArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
+		static void mutate(DeviceArray<bool> &population, DeviceArray<float> &mean_squared, KernelArray<float> &x, KernelArray<float> &y);
 		static float percentDifference(HostArray<bool> &population, int i);
 		static float getDiversity(HostArray<bool> &population);
 		static void DivergenceError();
@@ -52,8 +50,8 @@ class genetic : public optimization
 	public:
 
 		__device__ static void Get_random_parameters(KernelArray<float> &param, int i);
-		__device__ __host__ static void encode(KernelArray<bool> &bin, KernelArray<float> &param, int i);
-		__device__ __host__ static void decode(KernelArray<float> &param, KernelArray<bool> &bin, int i);
+		__device__ __host__ static void encode(KernelArray<bool> &bin, KernelArray<float> &param, int i_bin, int i_param);
+		__device__ __host__ static void decode(KernelArray<float> &param, KernelArray<bool> &bin, int i_param, int i_bin);
 		static void run();
 };
 
