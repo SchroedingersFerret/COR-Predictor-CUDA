@@ -33,12 +33,12 @@
 class anneal : public optimization
 {
 	private:
-		static float Gaussian_move(float mean, float std_dev,int accepted);
-		static thrust::host_vector<float> neighbor(thrust::host_vector<float> &old_state,float error,int accepted);
+		static float Gaussian_move(float mean, float std_dev, int accepted);
+		static HostArray<float> neighbor(HostArray<float> &old_state,float error,int accepted);
 		static float Temperature(float new_energy, int accepted);
 		static float rand_float();
 	public:
-		static void run(thrust::host_vector<float> &old_state, KernelArray<float> &x, KernelArray<float> &y);
+		static void run(HostArray<float> &old_state, KernelArray<float> &x, KernelArray<float> &y);
 };
 
 #endif /* COR_ANNEAL_H_ */
