@@ -1,5 +1,5 @@
 /*
- * COR-predictor.cpp
+ * COR-predictor.cu
  *
  *  Copyright 2019
  *      J. Ball (SchroedingersFerret)
