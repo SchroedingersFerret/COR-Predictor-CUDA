@@ -25,7 +25,6 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
-#include <thrust/host_vector.h>
 #include "k-hArray.h"
 #include "COR-predictor.h"
 #include "COR-optimization.h"
@@ -586,12 +585,13 @@ std::vector<float> COR_predictor::pGet_independent()
 //predicts a coefficient of restitution
 void COR_predictor::Predict()
 {
-	thrust::host_vector<float> x(n_data*nx);
+	HostArray<float> x(n_data*nx, n_data, nx, 1);
 	flatten2dToHost(x,independent);
-	thrust::host_vector<float> param(parameters_global.size()*parameters_global[0].size());
+	KernelArray<float> k_x(x);
+	HostArray<float> param(1*parameters_global.size()*parameters_global[0].size(),1,parameters_global.size(), parameters_global[0].size());
 	flatten2dToHost(param,parameters_global);
-	float pred_y = optimization::f(convertToKernel(x,n_data,nx,1),0,
-		convertToKernel(param,parameters_global.size(),parameters_global[0].size(),1),0);
+	KernelArray<float> k_param(param);
+	float pred_y = optimization::f(k_x,0,k_param,0);
 	std::cout.precision(3);
 	std::cout.setf(std::ios::fixed, std::ios::floatfield);
 	std::cout << "e = " << pred_y << "\n\n";
