@@ -577,20 +577,19 @@ void genetic::run()
 	//sum of the square of each residual
 	DeviceArray<float> mean_squared_error(n_gpool, n_gpool, 1, 1);
 
-	thrust::device_vector<float> x1(n_data*nx);
-	flatten2dToDevice(x1, independent);
-	KernelArray<float> d_x = convertToKernel(x1, n_data, nx, 1);
+	HostArray<float> x1(n_data*nx, n_data, nx, 1);
+	flatten2dToHost(x1, independent);
+	KernelArray<float> h_x(x1);
 
-	thrust::host_vector<float> x2(n_data*nx);
-	flatten2dToHost(x2, independent);
-	KernelArray<float> h_x = convertToKernel(x2, n_data, nx, 1);
+	DeviceArray<float> x2 = convertToDevice(x1);
+	KernelArray<float> d_x(x2);
 
-	thrust::host_vector<float> y2(n_data);
-	thrust::copy(dependent.begin(), dependent.end(), y2.begin());
-	KernelArray<float> h_y = convertToKernel(y2, n_data, 1, 1);
+	HostArray<float> y1(n_data, n_data, 1, 1);
+	thrust::copy(dependent.begin(), dependent.end(), y1.array.begin());
+	KernelArray<float> h_y(y1);
 
-	thrust::device_vector<float> y1 = y2;
-	KernelArray<float> d_y = convertToKernel(y1, n_data, 1, 1);
+	DeviceArray<float> y2 = convertToDevice(y1);
+	KernelArray<float> d_y(y2);
 
 	Initiate(binary_population, mean_squared_error, d_x, d_y);
 
@@ -649,8 +648,8 @@ void genetic::run()
 		iterations++;
 	};
 	stop_loop.join();
-	thrust::host_vector<float> param(parameters_global.size()*parameters_global[0].size());
-	KernelArray<float> k_param = convertToKernel(param,1,parameters_global.size(), parameters_global[0].size());
+	HostArray<float> param(1*parameters_global.size()*parameters_global[0].size(),1,parameters_global.size(), parameters_global[0].size());
+	KernelArray<float> k_param(param);
 	HostArray<bool> h_population = convertToHost(binary_population);
 	KernelArray<bool> k_population(h_population);
 	decode(k_param, k_population, 0, 0);
