@@ -31,10 +31,6 @@
 /*Thanks to Ashwin on Code Yarns for this method: https://codeyarns.com/2011/04/09/how-to-pass-thrust-device-vector-to-kernel/
 The Kernel Array structure is a way to convert higher dimensional arrays into 1-d arrays that the kernel can understand
 The three size variables keep track of the dimensions of the original array*/
-
-
-
-
 template<typename T>
 struct DeviceArray
 {
@@ -167,33 +163,34 @@ HostArray<T> convertToHost(thrust::host_vector<T> &hVec, int i, int j, int k)
 }
 
 template <typename T>
-void flatten2dToDevice(thrust::device_vector<T> &device, std::vector<std::vector<T> > &v)
+void flatten2dToDevice(DeviceArray<T> &device, std::vector<std::vector<T> > &v)
 {
 	int ni = v.size();
 	int nj = v[0].size();
 	for (int i=0; i<ni; ++i)
 		for (int j=0; j<nj; ++j)
-			device[j+nj*i] = v[i][j];
+			device.array[j+nj*i] = v[i][j];
 }
 
 template <typename T>
-void flatten2dToHost(thrust::host_vector<T> &host, std::vector<std::vector<T> > &v)
+void flatten2dToHost(HostArray<T> &host, std::vector<std::vector<T> > &v)
 {
 	int ni = v.size();
 	int nj = v[0].size();
 	for (int i=0; i<ni; ++i)
 		for (int j=0; j<nj; ++j)
-			host[j+nj*i] = v[i][j];
+			host.array[j+nj*i] = v[i][j];
 }
 
 template <typename T>
-std::vector<std::vector<T> > recover2d(thrust::host_vector<T> &host, int ni, int nj)
+std::vector<std::vector<T> > recover2d(HostArray<T> &host, int ni, int nj)
 {
 	std::vector<std::vector<T> > result(ni,std::vector<T>(nj));
 	for (int i=0; i<ni; ++i)
 		for (int j=0; j<nj; ++j)
-			result[i][j] = host[j+nj*i];
+			result[i][j] = host.array[j+nj*i];
 	return result;
 }
 
 #endif /* KH_ARRAY_H_ */
+
