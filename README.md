@@ -53,6 +53,5 @@ This file is generated at the end of optimization and contains the best-fitting 
 
 Building COR Predictor CUDA:
 
-COR Predictor CUDA requires Nvidia's CUDA Toolkit, which can be found [here] [toolkit].
-[toolkit]: https://developer.nvidia.com/cuda-downloads
-!
+COR Predictor CUDA requires Nvidia's CUDA Toolkit, which can be found [here] (https://developer.nvidia.com/cuda-downloads)
+
