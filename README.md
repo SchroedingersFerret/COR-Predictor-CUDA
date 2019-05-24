@@ -62,9 +62,9 @@ In the terminal, navigate to the build folder in the parent directory `~/COR-Pre
 
 Run cmake with the command 
 
-`~/COR-Predictor-CUDA-0.2-beta/build $ CUDACXX="NVCC PATH" cmake -DCMAKE_CUDA_FLAGS="-arch=ARCHITECTURE" ..`
+`~/COR-Predictor-CUDA-0.2-beta/build $ CUDACXX="NVCC_PATH" cmake -DCMAKE_CUDA_FLAGS="-arch=ARCHITECTURE" ..`
 
-replacing `NVCC PATH`with the path of the Nvidia Code Compiler, "/usr/local/cuda-10.1/bin/nvcc" for example, and replace `ARCHITECTURE` with your Nvidia GPU architechture, such as "sm_50".
+replacing `NVCC_PATH`with the path of the Nvidia Code Compiler, "/usr/local/cuda-10.1/bin/nvcc" for example, and replacing `ARCHITECTURE` with your Nvidia GPU architechture, such as "sm_50".
 
 Make the executable with 
 
@@ -91,7 +91,7 @@ No configuration is necessary. Simply press 'Generate' to create the makefile.
 
 Using COR Predictor:
 
-COR Predictor uses a genetic algorithm to fit a set of parameters to the training data. The genetic algorithm starts by creating an initial set of parameter configurations and selecting a percentage of them that best fit the training data as a gene pool. These configurations are encoded as 2-d bit arrays. 
+COR Predictor uses a genetic algorithm to fit a set of parameters to the training data. The genetic algorithm starts by creating an initial set of parameter configurations and selecting a percentage of them that best fits the training data as a gene pool. These configurations are encoded as 1-d boolean arrays compatable with the GPU.
 
 An iterative process then starts where the best-fitting half of the configurations is selected to be kept for reproduction. Pairs of these configurations are selected as parents, and children configurations are created by carrying over each bit from one of the two parents selected at random. The children replace the configurations not selected for reproduction.
 
@@ -137,7 +137,7 @@ Running COR Predictor
 
 COR Predictor is run by entering the command 
 
-`~/COR-Predictor-0.5.1-beta/build $ ./COR-Predictor`
+`~/COR-Predictor-CUDA-0.2-beta/build $ ./COR-Predictor`
 
 while in the build folder. 
 
