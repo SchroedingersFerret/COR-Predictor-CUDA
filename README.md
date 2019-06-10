@@ -57,7 +57,7 @@ COR Predictor CUDA requires Nvidia's CUDA Toolkit, which can be found [here](htt
 
 * Gnu+Linux
 
-In the terminal, navigate to the build folder in the parent directory `~/COR-Predictor-0.5.1-beta` with the command 
+In the terminal, navigate to the build folder in the parent directory `~/COR-Predictor-CUDA-0.2-beta` with the command 
 `~ $ cd COR-Predictor-CUDA-0.2-beta/build`
 
 Run cmake with the command 
